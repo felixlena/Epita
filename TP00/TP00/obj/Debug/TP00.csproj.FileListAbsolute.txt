@@ -1,0 +1,6 @@
+C:\Users\felix\RiderProjects\TP00\TP00\obj\Debug\TP00.csprojAssemblyReference.cache
+C:\Users\felix\RiderProjects\TP00\TP00\obj\Debug\TP00.csproj.CoreCompileInputs.cache
+C:\Users\felix\RiderProjects\TP00\TP00\bin\Debug\TP00.exe
+C:\Users\felix\RiderProjects\TP00\TP00\bin\Debug\TP00.pdb
+C:\Users\felix\RiderProjects\TP00\TP00\obj\Debug\TP00.exe
+C:\Users\felix\RiderProjects\TP00\TP00\obj\Debug\TP00.pdb
