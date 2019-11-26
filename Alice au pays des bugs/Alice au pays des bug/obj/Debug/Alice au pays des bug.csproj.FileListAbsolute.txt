@@ -1,0 +1,6 @@
+C:\Users\felix\RiderProjects\Alice au pays des bugs\Alice au pays des bug\obj\Debug\Alice au pays des bug.csprojAssemblyReference.cache
+C:\Users\felix\RiderProjects\Alice au pays des bugs\Alice au pays des bug\obj\Debug\Alice au pays des bug.csproj.CoreCompileInputs.cache
+C:\Users\felix\RiderProjects\Alice au pays des bugs\Alice au pays des bug\bin\Debug\Alice_au_pays_des_bug.exe
+C:\Users\felix\RiderProjects\Alice au pays des bugs\Alice au pays des bug\bin\Debug\Alice_au_pays_des_bug.pdb
+C:\Users\felix\RiderProjects\Alice au pays des bugs\Alice au pays des bug\obj\Debug\Alice_au_pays_des_bug.exe
+C:\Users\felix\RiderProjects\Alice au pays des bugs\Alice au pays des bug\obj\Debug\Alice_au_pays_des_bug.pdb
