@@ -105,7 +105,7 @@ let prime_mod_power a b n=
 
 let is_prime n=
   let rec loop i=
-    if i== n then
+    if i==n then
       true
     else if n mod i ==0 then
       false
@@ -114,5 +114,125 @@ let is_prime n=
   in
   if n<1 then
     invalid_arg "error : n<1"
-  if n==2 then
-    true
+   else if n==2 then
+      true
+   else
+     loop 3;;
+      
+(* Generate prime *)
+
+let init_eratosthenes n=
+  let rec loop i=
+    if i>n then
+      []
+    else
+      i::loop (i+1)
+  in
+  2::loop 3;;
+
+let eratosthenes n=
+  let rec delete l k=
+    match l with
+	[]->[]
+      |e::l ->
+	if e mod k =0 && e <> k then
+	  delete l k
+	else
+	  e::delete l k
+  in
+  let rec loop l i=
+    if i=n then
+      l
+    else
+      loop (delete l i) (i+1)
+  in
+  loop (init_eratosthenes n) 2;;
+
+
+let double_primes n fct=
+  let rec loop i=
+    if n=i then
+      []
+    else if fct i && fct (2*i+1) then
+      (i, 2*i+1)::loop (i+1)
+    else
+      loop (i+1)
+  in
+  loop 2;;
+  
+(*FIN*)
+
+(* cipher *)
+let rec encrypt_cesar key word n=
+  match word with
+      [] -> []
+    |e::l -> let c= (e+key) mod n in
+	     if n<0 then
+	       let c=c+n in c::encrypt_cesar key l n
+	     else
+	       c::encrypt_cesar key l n;;
+
+let decrypt_cesar key word n= encrypt_cesar (-key) word n;;
+
+
+let is_inverse x y n = modulo ((modulo x n) * (modulo y n)) n = 1
+  
+let generate_keys_rsa p q=
+  let n= p*q in
+  let phi= (p-1)*(q-1) in
+  let rec find_exposant_de_chiffrement i=
+    if pgcd phi i = 1 then
+      i
+    else
+      find_exposant_de_chiffrement (i+1)
+  in
+  let e = find_exposant_de_chiffrement 2
+  in let rec find_d i=
+       if (i*e) mod phi=1 then
+	 i
+       else
+	 find_d (i+1)
+  in
+  let d= find_d 1
+  in ((n, e),(n,d));;
+
+let encrypt_rsa m (n,e)= mod_power m e n;;
+
+let decrypt_rsa c (n,d)= mod_power c d n;;
+
+(*FIN*)
+
+(* break_ciphers.ml *)
+
+let break (a,b)=0;;
+    
+  
+(*FIN*)
+
+
+(* SCALABLE.ML *)
+let from_int x=
+  let rec loop x n=
+    if n=0 then
+      []
+    else
+      let r=x mod n
+      in (x/n)::loop r (n/2)
+  in
+  let rec c2 l change=
+    match l with
+	[]->[]
+      |e::l->
+	if change then
+	  if e=0 then
+	    1::c2 l false
+	  else
+	    0::c2 l true
+	else
+	  e::c2 l false
+  in
+  if x>0 then
+    loop x 128
+  else
+    c2 (loop (-x) 128) true;;
+  
