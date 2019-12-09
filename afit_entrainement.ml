@@ -211,28 +211,85 @@ let break (a,b)=0;;
 
 
 (* SCALABLE.ML *)
+
 let from_int x=
-  let rec loop x n=
-    if n=0 then
-      []
+  let rec intToBin x d l=
+    if d=0 then
+      l
     else
-      let r=x mod n
-      in (x/n)::loop r (n/2)
-  in
-  let rec c2 l change=
+      intToBin (x mod d)(d/2)((x/d)::l)
+  and c2 l change=
     match l with
 	[]->[]
       |e::l->
 	if change then
 	  if e=0 then
-	    1::c2 l false
+	    1::c2 l true
 	  else
 	    0::c2 l true
 	else
-	  e::c2 l false
+	  if e=1 then
+	    e::c2 l true
+	  else
+	    e::c2 l false
   in
-  if x>0 then
-    loop x 128
+  if x>=0 then
+    intToBin bA 128 [0]
   else
-    c2 (loop (-x) 128) true;;
-  
+    c2(intToBin (-bA) 128 [0]) false;;
+
+
+
+let to_int n=
+  let rec sum l m z=
+    match l with
+      |[]|_::[] -> 0	
+      |e1::e2::[]-> if e2=0 then (z+e1*m) else -(256-(z+e1*m))
+      |e::l -> sum l (m*2) (z+e*m)
+  in
+   match n with
+      []->0
+     |l -> sum l 1 0;;
+
+let rec print_b n=
+  match n with
+      []->()
+    |e::l->print_int(e);
+      print_string(" ");
+      print_b l;;
+
+(* compare naturals*)
+
+let compare_n n1 n2=
+  if n1>n2 then
+    1
+  else if n1=n2 then
+    0
+  else
+    -1;;
+
+let (>>!) a b= if compare_n  a b = 1 then true else false;;
+let (<<!) a b= if compare_n  a b = -1 then true else false;;
+let (>=!) a b= let c = compare_n a b in if c = 1 || c = 0   then true else false;;
+let (<=!) a b= let c = compare_n a b in if c = -1 || c = 0   then true else false;;
+
+(*compare bits*)
+
+let compare_b l1 l2=
+  let n1=to_int l1 and n2=to_int l2 in
+  if n1>n2 then
+    1
+  else if n1=n2 then
+    0
+  else
+    -1;;
+
+let (>>) a b= if compare_b  a b = 1 then true else false;;
+let (<<) a b= if compare_b  a b = -1 then true else false;;
+let (>>=) a b= let c = compare_b a b in if c = 1 || c = 0   then true else false;;
+let (<<=) a b= let c = compare_b a b in if c = -1 || c = 0   then true else false;;
+
+
+let a=from_int (-10);;
+let b=from_int 10;;
+compare_b a b;;
