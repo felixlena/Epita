@@ -27,14 +27,9 @@ let reverse_n bA=
 
 
 let reverse_b bA=
-  let rec loop l1 l2=
-    match l1 with
-      []->l2
-      | e::l1-> loop l1 (e::l2)
-  in
   match bA with
-      []|_::[] -> []
-    |e::l-> e:: loop l [];;
+      []->[]
+    |e::l->e::reverse_n l;;
 
 let from_int x =
   let rec find_start x i=
@@ -134,7 +129,7 @@ let compare_n n1 n2=
   in
   let rec loop l1 l2=
     match (l1,l2) with
-      |([],[])-> 0
+      |([],_)|(_,[])-> 0
       |(e1::l1, e2::l2) ->
         if e1>e2 then 1
         else if e1<e2 then
@@ -190,13 +185,15 @@ let (<=!) a b= let c = compare_n a b in if c = -1 || c = 0   then true else fals
     @param bB A bitarray.
 *)
 let compare_b l1 l2=
-  let n1=to_int l1 and n2=to_int l2 in
-  if n1>n2 then
-    1
-  else if n1=n2 then
-    0
-  else
-    -1;;
+  let l1=reverse_b (l1) and l2=reverse_b (l2) in
+  match (l1,l2) with
+    |([],_)|(_,[]) -> 0
+    |(e1::l1,e2::l2)->
+      (match (e1,e2) with
+        |(0,0)->compare_n l1 l2
+        |(1,1)-> -1*compare_n l1 l2
+        |(0,1)->1
+        |(_,_)->(-1));;
 
 (* Bigger inorder comparison operator on bitarrays. Returns true if
     first argument is bigger than second and false otherwise.
@@ -232,12 +229,9 @@ let (>>=) a b= let c = compare_b a b in if c = 1 || c = 0   then true else false
     @param bA Bitarray.
 *)
 let sign_b bA =
-  let rec loop= function
-    |[]->0
-    |e::[]->if e=0 then 1 else -1
-    |e::l-> loop l
-  in
-  loop bA;;
+  match bA with
+      []-> 0
+    |e::_-> if e=1 then 1 else -1;;
 
 (* Absolute value of bitarray.
     @param bA Bitarray.
@@ -283,14 +277,56 @@ let _div_t a = (0, 0)
     @param nA Natural.
     @param nB Natural.
 *)
-let add_n nA nB = []
+let add_n nA nB =
+  let rec loop l1 l2 retenue=
+    match (l1,l2) with
+      |([],[]) when retenue->[1]
+      |([],[])->[]
+      |([],e2::l2)->e2::loop l1 l2 false
+      |(e1::l1,[])->e1::loop l1 l2 false
+      |(e1::l1, e2::l2)->
+	(match (e1,e2) with
+	  |(0,0) when retenue -> 1::loop l1 l2 false
+	  |(0,0)-> 0::loop l1 l2 false
+	  |(1,1) when retenue -> 1::loop l1 l2 true
+	  |(1,1)-> 0::loop l1 l2 true
+	  |(_,_) when retenue -> 0::loop l1 l2 true
+	  |(_,_) -> 1::loop l1 l2 false)
+  in loop nA nB false;;
+
 
 (* Difference of two naturals.
     UNSAFE: First entry is assumed to be bigger than second.
     @param nA Natural.
     @param nB Natural.
 *)
-let diff_n nA nB = []
+let diff_n nA nB =
+  let rec loop l1 l2 retenue=
+    match (l1,l2) with
+      |([],[]) when retenue->[1]
+      |([],[])->[]
+      |([],e2::l2)->e2::loop l1 l2 false
+      |(e1::l1,[])->e1::loop l1 l2 false
+      |(e1::l1, e2::l2)->
+	(match (e1,e2) with
+	  |(0,0) when retenue -> 1::loop l1 l2 true
+	  |(0,0)-> 0::loop l1 l2 false
+	  |(1,1) when retenue -> 1::loop l1 l2 true
+	  |(1,1)-> 0::loop l1 l2 false
+	  |(1,0) when retenue -> 0::loop l1 l2 false
+          |(1,0) -> 1::loop l1 l2 false
+          |(0,1) when retenue -> 0::loop l1 l2 true
+          |(_,_) -> 1::loop l1 l2 true)
+  in
+  let simplifier l=
+    let rec loop l=
+      match l with
+          []->[0;0]
+        |e1::l1 -> if e1=0 then loop l1 else l
+    in
+    reverse_n (loop(reverse_n l))
+  in
+ simplifier(loop nA nB false);;
 
 (* Addition of two bitarrays.
     @param bA Bitarray.
@@ -302,7 +338,10 @@ let add_b bA bB = []
     @param bA Bitarray.
     @param bB Bitarray.
 *)
-let diff_b bA bB = []
+let diff_b bA bB =
+  match (bA,bB) with
+      ([],_)|(_,[])->[]
+    |(e1::l1,e2::l2)->(diff_n l1 l2);;
 
 (* Shifts bitarray to the left by a given natural number.
     @param bA Bitarray.
