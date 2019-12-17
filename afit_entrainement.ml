@@ -499,7 +499,7 @@ let (>>=) a b= let c = compare_b a b in if c = 1 || c = 0   then true else false
 *)
 let sign_b bA =
   match bA with
-      []|_::[]->-2 (*impossible*)
+      []|_::[]->(-2) (*impossible*)
       |e::_ -> if e=0 then 1 else -1
 
 (* Absolute value of bitarray.
@@ -546,8 +546,23 @@ let _div_t a = (0, 0)
     @param nA Natural.
     @param nB Natural.
 *)
-let add_n nA nB = []
-
+let add_n nA nB =
+  let rec loop l1 l2 retenue=
+    match (l1,l2) with
+      |([],[]) when retenue->[1]
+	|([],[])->[]
+      |([],e2::l2)->e2::loop l1 l2 false
+      |(e1::l1,[])->e1::loop l1 l2 false
+      |(e1::l1, e2::l2)->
+	(match (e1,e2) with
+	  |(0,0) when retenue -> 1::loop l1 l2 false
+	  |(0,0)-> 0::loop l1 l2 false
+	  |(1,1) when retenue -> 1::loop l1 l2 true
+	  |(1,1)-> 0::loop l1 l2 false
+	  |(_,_) when retenue -> 0::loop l1 l2 true
+	  |(_,_) -> 1::loop l1 l2 false)
+  in loop nA nB false;;
+  
 (* Difference of two naturals.
     UNSAFE: First entry is assued to be bigger than second.
     @param nA Natural.
