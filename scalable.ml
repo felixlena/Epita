@@ -17,6 +17,7 @@ decomposition of a non-negative integer.
 (* Creates a bitarray from a built-in integer.
     @param x built-in integer.
 *)
+
 let reverse_n bA=
   let rec loop l1 l2=
     match l1 with
@@ -32,38 +33,17 @@ let reverse_b bA=
     |e::l->e::reverse_n l;;
 
 let from_int x =
-  let rec find_start x i=
-    if i >= x then
-      i
+  let rec loop x=
+    if x=0 then []
     else
-      find_start x (i*2)
-        in
-  let rec intToBin x d l=
-    if d=0 then
-      l
-    else
-      intToBin (x mod d)(d/2)((x/d)::l)
-  and  c2 l change=
-    match l with
-       []->[]
-      |e::l->
-	if change then
-	  if e=0 then
-	    1::c2 l true
-	  else
-	    0::c2 l true
-	else
-	  if e=1 then
-	    e::c2 l true
-	  else
-	    e::c2 l false
+      (x mod 2)::loop (x/2)
   in
-  if x>=0 then
-    let d=find_start x 1 in
-    0::intToBin x d []
+  if x=0 then
+    [0;0]
+  else if x>0 then
+    0::loop x
   else
-      let d=find_start (-x) 1 in
-    1::c2(intToBin (-x) d []) false;;
+    1::loop (-x);;
 
 (* Transforms bitarray of built-in size to built-in integer.
     UNSAFE: possible integer overflow.
@@ -72,11 +52,6 @@ let from_int x =
 
 
 let to_int n=
-  let rec pow l i=
-   match l with
-        []->i
-      |_::l -> pow l (i*2)
-  in
   let rec sum l m z=
     match l with
       |[] -> 0
@@ -89,7 +64,7 @@ let to_int n=
        if e=0 then
          sum l 1 0
        else
-         -pow l 1 + sum l 1 0;;
+         -sum l 1 0;;
 
 (* Prints bitarray as binary number on standard output.
     @param bA a bitarray.
@@ -231,32 +206,17 @@ let (>>=) a b= let c = compare_b a b in if c = 1 || c = 0   then true else false
 let sign_b bA =
   match bA with
       []-> 0
-    |e::_-> if e=1 then 1 else -1;;
+    |e::_-> if e=1 then -1 else 1;;
 
 (* Absolute value of bitarray.
     @param bA Bitarray.
 *)
 let abs_b bA =
-  if sign_b bA =1 then bA
+  if sign_b bA =0 then bA
   else
-    let rec c2 l change=
-    match l with
-       []->[]
-      |e::l->
-	if change then
-	  if e=0 then
-	    1::c2 l true
-	  else
-	    0::c2 l true
-	else
-	  if e=1 then
-	    e::c2 l true
-	  else
-	    e::c2 l false
-    in
     match bA with
         []|_::[]-> [] (*impossible*)
-      |e::l ->0:: c2 l false;;
+      |e::l ->0::l;;
 
 (* Quotient of integers smaller than 4 by 2.
     @param a Built-in integer smaller than 4.
@@ -282,8 +242,18 @@ let add_n nA nB =
     match (l1,l2) with
       |([],[]) when retenue->[1]
       |([],[])->[]
-      |([],e2::l2)->e2::loop l1 l2 false
-      |(e1::l1,[])->e1::loop l1 l2 false
+      |([],e2::l2)->
+        (match e2 with
+	  |0 when retenue -> 1::loop l1 l2 false
+          |0 ->  0::loop l1 l2 false
+          |1 when retenue -> 0:: loop l1 l2 true
+          |_ -> 1::loop l1 l2 false)
+      |(e1::l1,[])->
+        (match e1 with
+	  |0 when retenue -> 1::loop l1 l2 false
+          |0 ->  0::loop l1 l2 false
+          |1 when retenue -> 0:: loop l1 l2 true
+          |_ -> 1::loop l1 l2 false)
       |(e1::l1, e2::l2)->
 	(match (e1,e2) with
 	  |(0,0) when retenue -> 1::loop l1 l2 false
@@ -305,8 +275,13 @@ let diff_n nA nB =
     match (l1,l2) with
       |([],[]) when retenue->[1]
       |([],[])->[]
-      |([],e2::l2)->e2::loop l1 l2 false
-      |(e1::l1,[])->e1::loop l1 l2 false
+      |([],_)->[]
+      |(e1::l1,[])->
+        (match e1 with
+	  |0 when retenue -> 1::loop l1 l2 true
+          |0 ->  0::loop l1 l2 false
+          |1 when retenue -> 0:: loop l1 l2 false
+          |_ -> 1::loop l1 l2 false)
       |(e1::l1, e2::l2)->
 	(match (e1,e2) with
 	  |(0,0) when retenue -> 1::loop l1 l2 true
@@ -321,9 +296,10 @@ let diff_n nA nB =
   let simplifier l=
     let rec loop l=
       match l with
-          []->[0;0]
+          []->[0]
         |e1::l1 -> if e1=0 then loop l1 else l
     in
+    if l=[1;0] then [0;0] else
     reverse_n (loop(reverse_n l))
   in
  simplifier(loop nA nB false);;
@@ -332,43 +308,136 @@ let diff_n nA nB =
     @param bA Bitarray.
     @param bB Bitarray.
  *)
-let add_b bA bB = []
+let add_b bA bB =
+  match (bA,bB) with
+      (_,[])|([],_) -> []
+    |(e1::l1,e2::l2)->
+      (match (e1,e2) with
+        |(0,0)-> 0::add_n l1 l2
+        |(1,1) -> 1::add_n l1 l2
+        |(0,1) ->
+          if (>=!) l1 l2 then
+            0::diff_n l1 l2
+          else
+            1::diff_n l2 l1
+        |(_,_) ->
+          if (>=!) l2 l1 then
+            0::diff_n l2 l1
+          else
+            1::diff_n l1 l2)
 
 (* Difference of two bitarrays.
     @param bA Bitarray.
     @param bB Bitarray.
 *)
 let diff_b bA bB =
-  match (bA,bB) with
-      ([],_)|(_,[])->[]
-    |(e1::l1,e2::l2)->(diff_n l1 l2);;
+ match (bA,bB) with
+      (_,[])|([],_) -> []
+    |(e1::l1,e2::l2)->
+      (match (e1,e2) with
+        |(0,0)->
+          if (>=!) l1 l2 then
+            0::diff_n l1 (l2)
+          else
+            1::diff_n l2 (l1)
+        |(1,1) ->
+           if (>=!) l1 l2 then
+            1::diff_n l1 l2
+          else
+            0::diff_n l2 (l1)
+        |(0,1) ->0::add_n l1 (l2)
+        |(_,_) ->1::add_n l1 l2)
 
 (* Shifts bitarray to the left by a given natural number.
     @param bA Bitarray.
     @param d Non-negative integer.
 *)
-let rec shift bA d = []
+let  shift bA d =
+  let rec loop l d=
+    match d with
+        0-> bA
+      |_ -> 0 ::loop bA (d-1)
+  in
+  match bA with
+      []-> []
+    |e::l -> e::loop l d;;
+
+let rec shift_n bA d=
+   match d with
+        0-> bA
+     |_ -> 0 ::shift_n bA (d-1);;
 
 (* Multiplication of two bitarrays.
     @param bA Bitarray.
     @param bB Bitarray.
 *)
-let mult_b bA bB = []
+let mult_b bA bB =
+  let rec loop l1 l2=
+    match l2 with
+        []->[0;0]
+      |e::l2->
+        if e=1 then
+          add_n l1 (loop (shift_n l1 1) l2)
+        else
+          loop (shift_n l1 1) l2
+  in
+  match (bA, bB) with
+    |([],_)|(_,[]) ->[]
+    |[0;0],_|_,[0;0] -> [0;0]
+    |(e1::l1, e2::l2)->
+     ( match (e1, e2) with
+        |(0,0)->0::loop l1 l2
+        |(1,1)->0::loop l1 l2
+       |(_,_)-> 1::loop l1 l2)
 
-(* Quotient of two bitarrays.
+(* Quotient of two bitar
+rays.
     @param bA Bitarray you want to divide by second argument.
     @param bB Bitarray you divide by. Non-zero!
 *)
-let quot_b bA bB = []
+
+let quot_b bA bB =
+  let rec loop l1 l2 i func expected=
+    let l3=func l1 l2 in
+    if sign_b l3 = expected then
+      from_int(i)
+    else
+      loop l3 l2 (i+1) func expected
+  in
+  match (bA,bB) with
+    |([],_)|(_,[]) -> [0;0]
+    |(e1::l1, e2::l2)->
+      (match (e1,e2) with
+        |(0,0) -> loop (e1::l1) (e2::l2) 0 diff_b (-1)
+        |(1,1) -> (loop (e1::l1) (e2::l2) 0 diff_b 1)
+        |(1,0) -> mult_b ([1;1]) (loop (e1::l1) (e2::l2) 1 add_b 1)
+        |(_,_) -> mult_b ([1;1]) (loop (e1::l1) (e2::l2) 0 add_b (-1))
+      );;
 
 (* Modulo of a bitarray against a positive one.
     @param bA Bitarray the modulo of which you're computing.
     @param bB Bitarray which is modular base.
  *)
-let mod_b bA bB = []
+let mod_b bA bB =
+  let rec loop l1 l2 func stop_sign=
+    let l3=func l1 l2 in
+    if sign_b l3=stop_sign && l3 <> [0;0]  then
+      l1
+    else
+      loop l3 l2 func stop_sign
+  in
+  match (sign_b bA,sign_b bB) with
+    |(1,1)->loop bA bB diff_b (-1)
+    |(-1,-1)->loop bA bB diff_b 1
+    |(-1,1)->loop bA bB add_b 1
+    |(_,_)->loop bA bB add_b (-1)
+(*let c= diff_b bA (mult_b (quot_b bA bB) bB) in
+  if (<<) c [0;0] then
+    add_b c (abs_b bB)
+  else*)
 
 (* Integer division of two bitarrays.
     @param bA Bitarray you want to divide.
     @param bB Bitarray you wnat to divide by.
 *)
-let div_b bA bB = ([], [])
+let div_b bA bB = (quot_b bA bB), (mod_b bA bB);;
